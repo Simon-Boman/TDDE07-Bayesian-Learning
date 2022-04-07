@@ -8,7 +8,7 @@ library(manipulate)
 
 BetaPlot <- function(a,b){
   xGrid <- seq(0.001, 0.999, by=0.001)
-  prior = dbeta(xGrid, a, b)
+  prior = dbeta(xGrid, a, b) #dbeta - beta probability density function! 
   maxDensity <- max(prior) # Use to make the y-axis high enough
   plot(xGrid, prior, type = 'l', lwd = 3, col = "blue", xlim <- c(0,1), ylim <- c(0, maxDensity), xlab = "theta", 
        ylab = 'Density', main = 'Beta(a,b) density')
@@ -26,7 +26,7 @@ manipulate(
 
 BetaPriorPostPlot <- function(a,b,n,p){
   xGrid <- seq(0.001, 0.999, by=0.001)
-  normalizedLikelihood = dbeta(xGrid, n*p+1, n*(1-p)+1)
+  normalizedLikelihood = dbeta(xGrid, n*p+1, n*(1-p)+1) #dbeta är BETA DISTRIBUTION
   prior = dbeta(xGrid, a, b)
   posterior = dbeta(xGrid, a+n*p, b+n*(1-p))
   maxDensity <- max(normalizedLikelihood, prior, posterior) # Use to make the y-axis high enough

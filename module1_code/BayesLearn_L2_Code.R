@@ -22,7 +22,7 @@ NormalPriorPostPlot <- function(mu0,tau0,n,xbar,sigma){
   maximum <- max(IntervalData,IntervalPost)
   
   thetaGrid <- seq(minimum, maximum, length=1000)
-  normalizedLikelihood = dnorm(thetaGrid, mean = xbar, sd = sigma/sqrt(n))
+  normalizedLikelihood = dnorm(thetaGrid, mean = xbar, sd = sigma/sqrt(n)) #dnorm är NORMAL DISTRIBUTION
   prior = dnorm(thetaGrid, mean = mu0, sd = tau0)
   posterior = dnorm(thetaGrid, mean = mun, sd = taun)
   maxDensity <- max(normalizedLikelihood, prior, posterior) # Use to make the y-axis high enough
