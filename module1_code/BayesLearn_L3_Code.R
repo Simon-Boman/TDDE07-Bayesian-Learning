@@ -1,16 +1,16 @@
 #####################################################################################
 # Generates samples from the joint posterior distribution of the parameters
 # in the x1,....xn iid Normal(theta,sigma^2) model with
-# prior p(theta,sigma^2) propto 1/sigma^2
+# prior p(theta,sigma^2) prop to 1/sigma^2
 #####################################################################################
 NormalNonInfoPrior <- function(NDraws,Data){
   Datamean <- mean(Data)
   s2 <- var(Data)
   n <- length(Data)
   PostDraws <- matrix(0,NDraws,2)
-  PostDraws[,2] <- ((n-1)*s2)/rchisq(NDraws,n-1)
-  PostDraws[,1] <- rnorm(NDraws,mean=Datamean,sd=sqrt(PostDraws[,2]/n))
-  
+  PostDraws[,2] <- ((n-1)*s2)/rchisq(NDraws,n-1) #steg 1 och 2 i slides, dra ett sigma^2 från inv-chi^2
+  PostDraws[,1] <- rnorm(NDraws, mean=Datamean, sd=sqrt(PostDraws[,2]/n)) #steg 3 i slides, dra ett
+  #theta från N(mean,sd) där sd är från vårt tidigare dragna sigma^2
   return(PostDraws)
 }
 
@@ -26,21 +26,28 @@ mean(PostDraws[,1]>4.9 & PostDraws[,1]<5.1) # Approximate posterior probability 
 mean(PostDraws[,2]>99 & PostDraws[,2]<101)  # Approximate posterior probability of 99 < sigma^2 < 101
 
 
+
+
+
 ########################################################################################
 # Generate samples from the joint posterior distribution of theta=(theta_1,...,theta_K)
 # for the multinomial model with K categories and a Dirichlet prior for theta.
 ########################################################################################
 Dirichlet <- function(NDraws,y,alpha){
   K <- length(alpha)
-  xDraws <- matrix(0,NDraws,K)
-  thetaDraws <- matrix(0,NDraws,K) # Matrix where the posterior draws of theta are stored
-  for (j in 1:K){
-    xDraws[,j] <- rgamma(NDraws,shape=alpha[j]+y[j],rate=1)
+  xDraws <- matrix(0,NDraws,K) #10000 x 4 matrix
+  thetaDraws <- matrix(0,NDraws,K) # Matrix where the posterior draws of theta are stored, 10000 x 4
+  for (j in 1:K){ #j in 1:4
+    xDraws[,j] <- rgamma(NDraws,shape=alpha[j]+y[j],rate=1) #draw from gamma 
   }
   for (ii in 1:NDraws){
-    thetaDraws[ii,] <- xDraws[ii,]/sum(xDraws[ii,])
+    thetaDraws[ii,] <- xDraws[ii,]/sum(xDraws[ii,]) #normalize by dividing each row with sum of row
+    #now we have that z = (z1,z2,z3,z4) ~ Dircihlet(alpha1,alpha2,alpha3,alpha4)
+    #i.e. theta = (theta1, theta2, theta3, theta4) ~ Dircihlet(alpha1,alpha2,alpha3,alpha4)
   }
-  return(thetaDraws)
+ #print(xDraws)
+ #print(thetaDraws)
+  return(thetaDraws) 
 }
 
 ###########   Setting up data and prior  #################
@@ -55,16 +62,16 @@ thetaDraws <- Dirichlet(NDraws,y,alpha)
 
 K <- length(y)
 ########### Summary statistics from the posterior sample #########
-for (k in 1:K){
-  mean(thetaDraws[,k])
-  sqrt(var(thetaDraws[,k]))
+for (k in 1:K){ # 1:4, column dvs
+  print(mean(thetaDraws[,k]))
+  print(sqrt(var(thetaDraws[,k])))
 }
 
 sum(thetaDraws[,2]>thetaDraws[,1])/NDraws # p(theta2>theta1 | y)
 # Posterior probability that Android has largest share, i.e. p(theta_2 > max(theta_1,theta_3,theta_4) | y)
 Index_max <- matrix(0,NDraws,1)
 for (ii in 1:NDraws){
-Index_max[ii,1] <- which.max(thetaDraws[ii,])
+  Index_max[ii,1] <- which.max(thetaDraws[ii,]) #for each draw, save largest index
 }
 mean(Index_max==2)
 
