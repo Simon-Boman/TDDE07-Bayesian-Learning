@@ -26,7 +26,7 @@ mean(PostDraws[,1]>4.9 & PostDraws[,1]<5.1) # Approximate posterior probability 
 mean(PostDraws[,2]>99 & PostDraws[,2]<101)  # Approximate posterior probability of 99 < sigma^2 < 101
 
 
-
+plot(density(PostDraws))
 
 
 ########################################################################################
