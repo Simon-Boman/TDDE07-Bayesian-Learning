@@ -8,7 +8,7 @@ tao = sum((log(data)-mju)^2)/n
 
 NDraws = 10000
 PostDraws <- c(1:NDraws)
-set.seed(12345)
+#set.seed(12345)
 PostDraws <- ((n)*tao)/rchisq(NDraws,n) 
 #PostDraws[,1] <- rlnorm(NDraws, mean=tao, sd=sqrt(PostDraws[,2]/n))
 
@@ -43,6 +43,30 @@ qnorm(0.975, mean, sd)
 density = density(G)
 density
 
-sortedG = sort(G)
-densitySorted = density(sortedG)
-densitySorted
+
+x = density$x
+y = density$y
+xy = cbind(x,y)
+
+xy_sorted = xy[order(xy[,2],decreasing=TRUE),]
+
+#get index of 95% mass
+cumSum = cumsum(xy_sorted[,2])
+stop = sum(xy_sorted[,2])*0.95
+index = min(which(cumSum > stop)) - 1
+
+xy_sorted_95 = xy_sorted[1:index,]
+
+lower = which.min(xy_sorted_95[,1])
+upper = which.max(xy_sorted_95[,1])
+lower
+upper
+
+lower = xy_sorted_95[lower,1]
+upper = xy_sorted_95[upper,1]
+lower
+upper
+
+abline(v=lower, col="blue")
+abline(v=upper, col="blue")
+
