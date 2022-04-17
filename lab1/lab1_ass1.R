@@ -80,3 +80,6 @@ log_odds = log(data / (1-data))
 #posterior distribution of the log-odds
 hist(log_odds, breaks=25)
 plot(density(log_odds), main = "Density estimation of posterior distribution of log_odds")
+
+
+
