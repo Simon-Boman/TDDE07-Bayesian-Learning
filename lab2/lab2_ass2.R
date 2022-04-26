@@ -2,23 +2,23 @@ library("mvtnorm")
 
 data = read.table("WomenAtWork.dat", header=TRUE)
 n = nrow(data)
-
-### Prior and data inputs ###
-Covs <- c(2:7) # Select which covariates/features to include
-standardize <- TRUE # If TRUE, covariates/features are standardized to mean 0 and variance 1
-lambda <- 1# scaling factor for the prior of beta 
+covs = c(2:8)
 
 y = data$Work
 X = as.matrix(data[,2:8])
 n_par <- ncol(X)
 
-
-mu0 = 0
+# prior: Beta ~ N(mu0, tao^2 * I)
 mu0 <- as.matrix(rep(0,n_par))
 tao = 5
 sigma0 = tao^2*diag(7)
-#Beta ~ N(0, tao^2* I)
 
+
+standardize <- FALSE 
+if (standardize){
+  Index <- 2:(length(covs)) #normalize only index 2 to last of cov (index 1 is intercept)
+  X[,Index] <- scale(X[,Index]) #thus only scale columns 2-8
+}
 
 LogPostLogistic <- function(betas,y,X,mu,sigma){
   linPred <- X%*%betas;
@@ -30,15 +30,12 @@ LogPostLogistic <- function(betas,y,X,mu,sigma){
 
 
 # Select the initial values for beta
-initVal <- matrix(0,n_par,1) #default just 11 zeros, if 11 covs.
+initVal <- matrix(0,n_par,1) #default just 7  zeros, if 7 covariates/variables
 
 # The argument control is a list of options to the optimizer optim, where fnscale=-1 means that we minimize 
 # the negative log posterior. Hence, we maximize the log posterior. 
 # y = 1 if working. X = our variables we worked with before. 
 OptimRes <- optim(initVal,LogPostLogistic,gr=NULL,y,X,mu0,sigma0,method=c("BFGS"),control=list(fnscale=-1),hessian=TRUE)
-
-
-
 
 #posterior mode
 betaTilde = OptimRes$par
@@ -48,34 +45,34 @@ betaTilde
 J_betaTilde = -solve(OptimRes$hessian)
 J_betaTilde
 
-coeff_smallkids = betaTilde[6]
-coeff_smallkids
 
+#simulate 10000 draws from posterior
 nDraws = 10000
 betaDraws = rmvnorm(n=nDraws, mean=betaTilde, sigma=J_betaTilde)
-
 interval = apply(X=as.matrix(betaDraws[,6]), MARGIN=2, FUN=function(x) quantile(x, probs=c(0.025,0.975)))
+lowerBound = interval[1,]
+upperBound = interval[2,]
+#alt: 
+#coeff_smallkids = betaTilde[6]
+#lowerBound = coeff_smallkids - 1.96*sd(betaDraws[,6])
+#upperBound = coeff_smallkids + 1.96*sd(betaDraws[,6])
 
-#plot(density(betaDraws[,6]))
+plot(density(betaDraws[,6]))
+abline(v=lowerBound, col="red")
+abline(v=upperBound, col="red")
+
 plot(density(betaDraws))
-
-abline(v=interval[1,], col="red")
-abline(v=interval[2,] ,col="red")
+abline(v=lowerBound, col="red")
+abline(v=upperBound, col="red")
 
 
 glmModel <- glm(Work ~ 0 + ., data = data, family = binomial)
-
-
-
+glmModel
 
 
 ############################2b
-
 x_new = as.matrix(c(1, 20, 12, 8, 43, 0, 2))
-
-
 log_reg = exp(t(x_new)%*%t(betaDraws)) / (1 + exp(t(x_new)%*%t(betaDraws)))
-
 plot(density(log_reg))
 
 
@@ -87,7 +84,7 @@ prob_working = mean(log_reg)
 #for (i in 1:nDraws) {
  # nr_working[i] = sum(rbinom(11, 1, prob_working))
 #}
-hist(nr_working, freq = 11)
+#hist(nr_working, freq = 11)
 
 nr_working2 = rbinom(nDraws, 11, prob_working)
 hist(nr_working2)
