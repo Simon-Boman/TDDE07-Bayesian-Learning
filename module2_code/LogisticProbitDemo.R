@@ -1,5 +1,5 @@
 ### Select Logistic or Probit regression and install packages ###
-Probit <- 1
+Probit <- 0
 # install.packages("mvtnorm") # package that contains the multivariate normal pdf
 library("mvtnorm") # reads the mvtnorm package into R's memory. We can now use the necessary function dmvnorm.
 
@@ -17,6 +17,7 @@ for (i in 1:Nobs){
     y[i] <- 1
   }
 }
+
 WineData <- data.frame(intercept=rep(1,Nobs),WineData) # add intercept
 X <- as.matrix(WineData[,Covs]); #selects all rows, columns 1-11
 Xnames <- colnames(X)
@@ -25,6 +26,7 @@ if (standardize){
   X[,Index] <- scale(X[,Index]) #thus only scale columns 2-10
 }
 Npar <- dim(X)[2] #number of parameters in the data X
+
 
 # Setting up the prior
 mu <- as.matrix(rep(0,Npar)) # Prior mean vector - only 0's
@@ -61,7 +63,7 @@ if (Probit==1){
 
 # The argument control is a list of options to the optimizer optim, where fnscale=-1 means that we minimize 
 # the negative log posterior. Hence, we maximize the log posterior. 
-# y = 1 if quality > 5. X = our variables we worked with before. 
+# y = 1 if working. X = our variables we worked with before. 
 OptimRes <- optim(initVal,logPost,gr=NULL,y,X,mu,Sigma,method=c("BFGS"),control=list(fnscale=-1),hessian=TRUE)
 
 # Printing the results to the screen

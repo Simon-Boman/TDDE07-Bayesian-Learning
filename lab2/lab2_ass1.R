@@ -116,4 +116,30 @@ lines(data$time, temps, type="l", col = "red")
 
 ##############################1c
 
+# temp(time) = b0 + b1*time + b2*time^2
+# d(temp) /d(time) = b1 + 2*b2*time = 0 <=> time = - b1 / 2*b2
 
+#times_highest_temp = c(1:nDraws)
+times_highest_temp = -postBetaDraws[,2] / (2*postBetaDraws[,3]) 
+
+plot(times_highest_temp)
+hist(times_highest_temp, breaks = 20) #0.540 - 0.542 -> 0.541, i.e. 197 days (17 july)
+
+#highest_temps = c(1:nDraws)
+highest_temps = postBetaDraws[,1] + postBetaDraws[,2]*times_highest_temp + postBetaDraws[,3]*times_highest_temp^2
+hist(highest_temps, breaks = 20)
+
+plot(data$time, data$temp, cex = 0.5)
+points(times_highest_temp, highest_temps, col = "blue")
+
+
+##############################1d
+#we can use spline regression, where we to avoid overfittign use a smoothness/shrinkage/regulariation
+#prior. It can be selected using the same prior as previously, but setting mu0 = 0, sigma0 = lambda*I,
+#where lambda determines the amount of shrinkage.
+
+
+mu0 = 0
+lambda = 1
+sigma0 = lambda*diag(9)
+#prior: B_j|sigma^2 ~N(0, sigma^2/lambda)
