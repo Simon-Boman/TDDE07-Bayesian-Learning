@@ -1,4 +1,5 @@
 ############################### ASSIGNMENT 1 #####################################
+# Linear and polynomial regression
 # The dataset TempLambohov.txt contains daily average temperatures (in degree Celcius) at Lambohov, Linköping over the course of the year 2019. 
 # The response variable is temp and the covariate is time = the number of days since the beginning of the year/365
 # Quadratic regression model: temp = Beta0 + Beta1 · time + Beta2 · time2 + epsilon, epsilon iid ~ N(0, sigma^2)
