@@ -23,6 +23,7 @@
 
 library("mvtnorm")
 
+
 data = read.table("WomenAtWork.dat", header=TRUE)
 n = nrow(data)
 
@@ -92,45 +93,54 @@ upperBound
 # lowerBound = coeff_smallkids - 1.96*sd(betaDraws[,6])
 # upperBound = coeff_smallkids + 1.96*sd(betaDraws[,6])
 
-
-
-
-
-
-
-
-
-###############3
-
-
-plot(density(betaDraws[,6]))
+# posterior probability interval for the regression coefficient to the variable NSMallChild
+plot(density(betaDraws[,6]), main="Estimated density and posterior probability interval for the regression coefficient to the variable NSMallChil")
 abline(v=lowerBound, col="red")
 abline(v=upperBound, col="red")
 
-plot(density(betaDraws))
-abline(v=lowerBound, col="red")
-abline(v=upperBound, col="red")
-
+plot(density(betaDraws), main="Estimated density for all regression coefficients (betas")
 
 glmModel <- glm(Work ~ 0 + ., data = data, family = binomial)
 glmModel
+# the parameters from optim, i.e. our betaTilde, are very similar to the parameter values from the fitted glm model. 
 
 
-############################2b
+
+
+############################### 2b #####################################
+# Use your normal approximation to the posterior from (a). Write a function
+# that simulate draws from the posterior predictive distribution of Pr(y = 1|x),
+# where the values of x corresponds to a 43-year-old woman, with two children (7 and 10 years old),
+# 12 years of education, 8 years of experience, and a husband with an income of 20.
+# Plot the posterior predictive distribution of Pr(y = 1|x) for this woman.
+# [Hints: The R package mvtnorm will be useful. Remember that Pr(y = 1|x) can be calculated for each posterior draw of beta.]
+
+
 x_new = as.matrix(c(1, 20, 12, 8, 43, 0, 2))
+# calculate the probability between 0 and 1 that the woman is working using logistic regression, 
+# using our simulated beta draws from the posterior
 log_reg = exp(t(x_new)%*%t(betaDraws)) / (1 + exp(t(x_new)%*%t(betaDraws)))
-plot(density(log_reg))
+# plot the estimated density of the results. 
+plot(density(log_reg), main="Posterior predictive distribution of Pr(y = 1|x). Mean at 0.536")
+abline(v=mean(log_reg), col="red")
+
+# calculate number of cases where Pr(y=1|x) > 0.5
+workingProb = length(log_reg[log_reg>0.5]) / nDraws 
+workingProb
 
 
 
-############################2c
-prob_working = mean(log_reg)
 
-#nr_working = c(1:nDraws)
-#for (i in 1:nDraws) {
- # nr_working[i] = sum(rbinom(11, 1, prob_working))
-#}
-#hist(nr_working, freq = 11)
 
-nr_working2 = rbinom(nDraws, 11, prob_working)
-hist(nr_working2)
+############################### 2c #####################################
+# Now, consider 11 women which all have the same features as the woman in (b). 
+# Rewrite your function and plot the posterior predictive distribution for the number of women,
+# out of these 11, that are working. [Hint: Simulate from the binomial distribution, 
+# which is the distribution for a sum of Bernoulli random variables.]
+
+
+# 10000 times, take 11 draws using log_reg as probability
+# i.e. for each of the 10000 times we use a different probability from log_reg, and make 11 draws. 
+nrWorking = rbinom(nDraws, 11, log_reg)
+hist(nrWorking)
+
