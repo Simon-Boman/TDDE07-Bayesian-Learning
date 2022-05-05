@@ -27,19 +27,12 @@ plot(density(G), main = "Posterior distribution of the Gini coefficient G for th
 
 
 ###############################2c#####################################
-#estimation of the the 95% equal tail credible interval using mean and sd
-mean = mean(G) 
-sd = sd(G)
-lowerBound = mean - 1.96*sd
-upperBound = mean + 1.96*sd 
-lowerBound
-upperBound
+#estimation of the the 95% equal tail credible interval 
 
-#more exact values using qnorm
-lowerBound = qnorm(0.025, mean, sd)
-upperBound = qnorm(0.975, mean, sd)
-lowerBound
-upperBound
+G_sorted = sort(G)
+interval = quantile(G_sorted, probs=c(0.025, 0.975))
+lowerBound = interval[1]
+upperBound = interval[2]
 
 plot(density(G), main = "Posterior distribution of the Gini coefficient G for the current data set, \n with 95% equal tail credible interval. ")
 abline(v=lowerBound, col="red")
@@ -98,7 +91,3 @@ abline(v=lowerBound, col="red")
 abline(v=upperBound, col="red")
 abline(v=HPDIlower, col="blue")
 abline(v=HPDIupper, col="blue")
-
-
-
-
