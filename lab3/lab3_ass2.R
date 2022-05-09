@@ -24,8 +24,9 @@ sigma0 = 100*solve(t(X)%*%X)
 
 #exp(x*betas) är vårt theta i slidsen L2 poisson likelihood.
 LogPostPoisson <- function(betas,y,X,mu,sigma){
-  print(dim(X))
-  print(dim(betas))
+ # print("x, betas")
+  #print(dim(X))
+  #print(dim(betas))
   #linPred <- X%*%betas;
   lambda = as.matrix(exp(X%*%betas)) #theta samma som lambda
  # logLikelihood <- sum( linPred*y - log(1 + exp(linPred)) ); #eftersom log, skiljer sig från slides? 
@@ -35,7 +36,11 @@ LogPostPoisson <- function(betas,y,X,mu,sigma){
   
   
   #if (abs(logLik) == Inf) logLik = -20000; # Likelihood is not finite, steer the optimizer away from here!
-  logPrior <- dmvnorm(betas, mu0, sigma0, log=TRUE); #dmvnorm - Multivariate Normal Density and Random Deviates
+#  print("betas, mu")
+ # print(dim(betas))
+  #print(dim(mu0))
+  logPrior <- dmvnorm(t(betas), t(mu), sigma, log=TRUE); #dmvnorm - Multivariate Normal Density and Random Deviates
+  #print("klart")
   return(logLikelihood + logPrior)
 }
 
@@ -56,12 +61,19 @@ glmModel$coefficients
 #######c
 RWMSampler = function(c, sigma, prevBeta, logPostFunc, ...) {
   #sample proposal
+ # print(dim(prevBeta))
+  #print(dim(c*sigma))
   proposalBeta = rmvnorm(n=1, mean = prevBeta, sigma = c*sigma) #rmvnorm - Draw from MultiVariate Normal Distribution 
   proposalBeta = t(proposalBeta)
+  #print("DIM PROPOSAL:")
+  #print(dim(proposalBeta))
   #compute acceptance probability, using user selected function 
   alpha = min(1, exp(logPostFunc(proposalBeta, ...)-logPostFunc(prevBeta, ...)) )
   #with probability alpha, set theta(i)=sample proposal, otherwise theta(i) = theta(i-1) (prev beta)
   prob = runif(1)
+  #print("proposal, prev")
+  #print(dim(proposalBeta))
+  #print(dim(prevBeta))
   if (alpha >= prob) {
     return (proposalBeta)
   }
@@ -76,7 +88,56 @@ c = 3
 # sigma from b)
 # logPostFunc = LogPostPoisson
 
-test = RWMSampler(c, sigma, initVal, LogPostPoisson, y, X, mu, sigma)
+test = RWMSampler(c, sigma, initVal, LogPostPoisson, y, X, mu0, sigma0)
+test#OptimRes <- optim(initVal,LogPostPoisson,gr=NULL,y,X,mu0,sigma0,method=c("BFGS"),control=list(fnscale=-1),hessian=TRUE)
 
+nDraws = 10000
+posteriorDraws = matrix(nrow=9, ncol=nDraws)
+posteriorDraws[,1] = RWMSampler(c, sigma, initVal, LogPostPoisson, y, X, mu0, sigma0)
+posteriorDraws[,1]
+print(dim(posteriorDraws[,1]))
+
+#for (i in 2:nDraws-1) {
+  #posteriorDraws[,i] = RWMSampler(c, sigma, (posteriorDraws[,i-1]), LogPostPoisson, y, X, mu0, sigma0)
+ # posteriorDraws[,i] = RWMSampler(c, sigma, matrix(posteriorDraws[,i-1],9,1), LogPostPoisson, y, X, mu0, sigma0)
+  #
+#}
+
+
+
+for(i in 1:(nDraws-1)){
+  #print(dim(posteriorDraws))
+  posteriorDraws[,i+1]= RWMSampler(c, sigma, posteriorDraws[,i], LogPostPoisson, y, X, mu0, sigma0)
+  
+}
+
+
+glmEstimation = glmModel$coefficients
+par(mfrow=c(3,3))
+for (betaIndex in 1:9) {
+  plot(c(1:nDraws), abs(posteriorDraws[betaIndex,]-glmEstimation[betaIndex]), type="l", col="red")
+  
+}
+
+
+
+
+##################################### 2d
+#intercept and x
+x= c(1, 1, 0, 1, 0, 1, 0, 1.2, 0.8)
+
+nrBids = c(1:nDraws)
+for (i in 1:nDraws) {
+  nrBids[i] = rpois(1, lambda=exp(x%*%posteriorDraws[,i]))
+}
+nrBids
+#nrBids = rpois(nDraws, lambda=t(x%*%posteriorDraws))
+# i.e. for each of the 10000 times we use a different probability from log_reg, and make 11 draws. 
+hist(nrBids)
+
+
+
+probNoBids = sum(nrBids==0)/nDraws
+probNoBids
 
 
