@@ -22,16 +22,22 @@ model {
 data <- list(N=N, y=y)
 warmup <- 1000
 niter <- 2000
+
 fit <- stan(model_code=StanModel,data=data, warmup=warmup,iter=niter,chains=4)
+
 # Print the fitted model
 print(fit,digits_summary=3)
+
 # Extract posterior samples
 postDraws <- extract(fit)
+
 # Do traceplots of the first chain
 par(mfrow = c(1,1))
 plot(postDraws$mu[1:(niter-warmup)],type="l",ylab="mu",main="Traceplot")
+
 # Do automatic traceplots of all chains
 traceplot(fit)
+
 # Bivariate posterior plots
 pairs(fit)
 
