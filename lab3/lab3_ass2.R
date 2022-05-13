@@ -13,6 +13,9 @@ glmModel
 
 
 
+
+
+
 #########b
 
 y = data[,1]
@@ -53,10 +56,14 @@ OptimRes <- optim(initVal,LogPostPoisson,gr=NULL,y,X,mu0,sigma0,method=c("BFGS")
 betaTilde = OptimRes$par
 betaTilde
 # J_y_inv(betaTilde)
+J_y_inv_betaTilde = -solve(OptimRes$hessian)
 sigma = -solve(OptimRes$hessian)
 sigma
 betaTilde
 glmModel$coefficients
+
+
+
 
 #######c
 RWMSampler = function(c, sigma, prevBeta, logPostFunc, ...) {
@@ -88,14 +95,13 @@ c = 3
 # sigma from b)
 # logPostFunc = LogPostPoisson
 
-test = RWMSampler(c, sigma, initVal, LogPostPoisson, y, X, mu0, sigma0)
-test#OptimRes <- optim(initVal,LogPostPoisson,gr=NULL,y,X,mu0,sigma0,method=c("BFGS"),control=list(fnscale=-1),hessian=TRUE)
+#test = RWMSampler(c, sigma, initVal, LogPostPoisson, y, X, mu0, sigma0)
+#test#OptimRes <- optim(initVal,LogPostPoisson,gr=NULL,y,X,mu0,sigma0,method=c("BFGS"),control=list(fnscale=-1),hessian=TRUE)
 
 nDraws = 10000
 posteriorDraws = matrix(nrow=9, ncol=nDraws)
 posteriorDraws[,1] = RWMSampler(c, sigma, initVal, LogPostPoisson, y, X, mu0, sigma0)
 posteriorDraws[,1]
-print(dim(posteriorDraws[,1]))
 
 #for (i in 2:nDraws-1) {
   #posteriorDraws[,i] = RWMSampler(c, sigma, (posteriorDraws[,i-1]), LogPostPoisson, y, X, mu0, sigma0)
@@ -115,10 +121,9 @@ for(i in 1:(nDraws-1)){
 glmEstimation = glmModel$coefficients
 par(mfrow=c(3,3))
 for (betaIndex in 1:9) {
-  plot(c(1:nDraws), abs(posteriorDraws[betaIndex,]-glmEstimation[betaIndex]), type="l", col="red")
+  plot(c(1:nDraws), abs(posteriorDraws[betaIndex,]-glmEstimation[betaIndex]), type="l", col="red", xlab = "draw", ylab="deviance true and approximated", main = paste("Absolute deviance between actual and approximated Beta", betaIndex) )
   
 }
-
 
 
 
@@ -132,7 +137,7 @@ for (i in 1:nDraws) {
 }
 nrBids
 #nrBids = rpois(nDraws, lambda=t(x%*%posteriorDraws))
-# i.e. for each of the 10000 times we use a different probability from log_reg, and make 11 draws. 
+par(mfrow=c(1,1))
 hist(nrBids)
 
 
