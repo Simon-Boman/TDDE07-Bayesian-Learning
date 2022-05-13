@@ -68,7 +68,7 @@ initVal <- matrix(0,nr_parameters,1) #default just 7 zeros, if 7 covariates/vari
 OptimRes <- optim(initVal,LogPostLogistic,gr=NULL,y,X,mu0,sigma0,method=c("BFGS"),control=list(fnscale=-1),hessian=TRUE)
 
 # posterior mode, essentially what is optimized by the optimization. 
-# posterior mode is same as posterior mean and posteriro variance for multivariate normal distribution
+# posterior mode is same as posterior mean and posterior variance for multivariate normal distribution
 betaTilde = OptimRes$par
 betaTilde
 
