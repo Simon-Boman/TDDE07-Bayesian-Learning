@@ -128,9 +128,6 @@ postDraws_y <- extract(fit_y)
 # Do automatic traceplots of all chains
 traceplot(fit_y)
 
-# plot(postDraws_y$mu, type="l",ylab="mu",main="Traceplot") # Do traceplots of the first chain
-#pairs(fit_y) # Bivariate posterior plots
-
 # plot joint posterior of mu and phi
 plot(postDraws_x$mu, postDraws_x$phi,ylab="phi", xlab="mu")
 plot(postDraws_y$mu, postDraws_y$phi,ylab="phi", xlab="mu")

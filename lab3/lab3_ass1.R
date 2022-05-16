@@ -1,89 +1,107 @@
-library("mvtnorm")
-library(mvtnorm)
-
-###################### 1 A ###########################
+############################### ASSIGNMENT 1 #####################################
 # Gibbs sampler for a normal model
 # The dataset Precipitation.rds consists of daily records of weather with rain or snow (in units of mm) from the beginning of
 # 1962 to the end of 2008 in a certain area. 
 # Assume the natural log of the daily precipitation {y1, ..., yn} to be independent normally distributed,
 # ln y1, ...,ln yn|mu, sigma^2 ~ iid N(mu, sigma^2) where both mu and sigma^2 are unknown. 
-# Let mu ~ N(mu0, tau0squared) independently of sigma^2 ~ Inv-chi^2(v0, sigma0^2)
+# Let mu ~ N(mu0, tau0squared) independently of sigma^2 ~ Inv-chi^2(v0, sigma0_sq^2)
 
+
+############################### 1a #####################################
 # Implement (code!) a Gibbs sampler that simulates from the joint posterior p(mu, sigma^2 | ln y1,...,ln yn). 
 # The full conditional posteriors are given on the slides from Lecture 7. 
-# Evaluate the convergence of the Gibbs sampler by calculating the Ineffciency Factors (IFs) 
+# Evaluate the convergence of the Gibbs sampler by calculating the Inefficiency Factors (IFs) 
 # and by plotting the trajectories of the sampled Markov chains.
 
-data=readRDS("Precipitation.rds")
+library("mvtnorm")
+library(mvtnorm)
+
+data_original = readRDS("Precipitation.rds")
 n = length(data)
-log_data = log(data)
+data = log(data_original)
 
-# Initial parameters
-mu0 = mean(log_data)
-sigma0_sq = 10
-v0 = 250
-tau0_sq = 100
-nDraws = 10000
+mu0 = 15 #expected rainfall
+tao0_sq = 180 #variance of expected rainfaill
+v0 = 140 #expected value of variance
+sigma0_sq = 17 #expected 
 
-# Priors independent --> use Gibbs sampling to sample from the posterior 
-# posterior distribution of mu and sigma
 
-# Want to sample from our two full conditional posteriors (mu and sigma respectively)
 
-# Gibbs sampling
+
+nDraws <- 10000
 gibbsDraws <- matrix(0,nDraws,2)
 colnames(gibbsDraws) = c("mu", "sigma")
-sigma <- 1 # Initial value for sigma
-v_n = v0+n # Degrees of freedom
 
+vn = v0 + n 
+
+sigma_sq <- 1 # Initial value for sigma
 set.seed(12345)
-for (i in 1:nDraws){
+for (i in 1:nDraws){  
   
-  # Calculate posterior parameters
-  w = (n/sigma) / ((n/sigma)+1/tau0_sq)
-  mu_n = w*mean(log_data) + (1-w)*mu0
-  tau_n = 1/((n/sigma)+(1/tau0_sq))
+  #update tao_n^2, w, mu_n
+  #alt dela med tao0^2 om vi anger den som ej squared istället.
+  tao_n_sq = 1/(n/sigma_sq + 1/tao0_sq)  
+  w = (n/sigma_sq) / (n/sigma_sq + 1/tao0_sq) 
+  mu_n = w*mean(data) + (1-w)*mu0
   
   # Update mu given sigma
-  mu <- rnorm(1, mean = mu_n, sd = tau_n)
+  mu = rnorm(n = 1, mean = mu_n, sd = tao_n_sq)
   gibbsDraws[i,1] <- mu
   
   # Update sigma given mu
-  parameter_squared = (v0*sigma0_sq+sum(log_data-mu)^2)/(n+v0)
-  sigma = v_n*parameter_squared/rchisq(1,v_n)
-  gibbsDraws[i,2] <- sigma
+  # param2_sq = variance? 
+  param2_sq = (v0*sigma0_sq + sum(data-mu)^2) / (n + v0)
+  sigma_sq = (vn*param2_sq/rchisq(1, vn))
+  gibbsDraws[i,2] <- sigma_sq
+  
+#vi har X^2 (vn, param2)
+      # vn*param2 + 
+  #     X^2 (v0, sigma0_sq^2 )
+  #    ((v0)*sigma0_sq)/rchisq(nDraws,v0) 
 }
 
-# Calculate Inefficiency Factors (IFs)
-a_Gibbs = acf(gibbsDraws[,1])
-IF_Gibbs = 1+2*sum(a_Gibbs$acf[-1])
+gibbsDraws
 
-#Plot Gibbs sampling
-plot(1:nDraws, gibbsDraws[,1], type="l", col="orange")
-hist(gibbsDraws[,1], col="orange")
+a_Gibbs_mu <- acf(gibbsDraws[,1])
+IF_Gibbs_mu <- 1+2*sum(a_Gibbs_mu$acf[-1])
+IF_Gibbs_mu
 
-a_Gibbs = acf(gibbsDraws[,2])
-IF_Gibbs = 1+2*sum(a_Gibbs$acf[-1])
-
-plot(1:nDraws, gibbsDraws[,2], type="l", col="orange")
-hist(gibbsDraws[,2], col="orange")
+a_Gibbs_sigma <- acf(gibbsDraws[,2])
+IF_Gibbs_sigma <- 1+2*sum(a_Gibbs_sigma$acf[-1])
+IF_Gibbs_sigma
 
 
-###################### 1 B ###########################
+
+plot(1:nDraws, gibbsDraws[,1], type = "l",col="red") # traceplot of Gibbs draws
+hist(gibbsDraws[,1],col="red") # histogram of Gibbs draws
+cusumData =  cumsum(gibbsDraws[,1])/seq(1,nDraws) # Cumulative mean value of mu, Gibbs draws
+#plot(1:nDraws, cusumData, type = "l", col="red")
+#barplot(height = a_Gibbs_mu$acf[-1],col="red") # acf for Gibbs draws
+
+
+plot(1:nDraws, gibbsDraws[,2], type = "l",col="red") # traceplot of Gibbs draws
+hist(gibbsDraws[,2],col="red") # histogram of Gibbs draws
+cusumData =  cumsum(gibbsDraws[,2])/seq(1,nDraws) # Cumulative mean value of mu, Gibbs draws
+#plot(1:nDraws, cusumData, type = "l", col="red")
+#barplot(height = a_Gibbs_sigma$acf[-1],col="red") # acf for Gibbs draws
+
+
+
+############################### 1b #####################################
 # Plot the following in one figure: 
 # 1) a histogram or kernel density estimate of the daily precipitation {y1, ..., yn}. 
-# 2) The resulting posterior predictive density p(ytilde|y1,...,yn) using the simulated posterior draws from (a)
+# 2) The resulting posterior predictive density p(ytilde|y1,...,yn) using the simulated posteriro draws from (a)
 # How well does the posterior predictive density agree with this data?
+  
+  
+hist(data_original, main = "original data")
+posteriorDraws = rnorm(n = nDraws, mean = gibbsDraws[,1], sd = gibbsDraws[,2])
+#exp to convert back to normal scale
+posteriorDraws = exp(posteriorDraws)
+hist(posteriorDraws, main = "posterior draws")
 
-# Want to use our sigma and mu from the Gibbs sampling to make draws of y
+plot(density(posteriorDraws), col = "red", xlim=c(0,50), main = "green is original data, red is draws from posterior")
+lines(density(data_original), col = "green")
+#lines(density(data), col = "blue")
 
-postY = c(1:nDraws)
-
-set.seed(12345)
-postY = rnorm(n=nDraws, mean=exp(gibbsDraws[,1]), sd=exp(gibbsDraws[,2]))
-
-plot(density(data), lwd=2, axes=FALSE)
-axis(1)
-axis(2)
-lines(density(postY), col="orange", lwd=2)
 
