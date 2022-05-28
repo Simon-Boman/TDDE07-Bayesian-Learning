@@ -50,6 +50,14 @@ LogPostLogistic <- function(betas,y,X,mu,sigma){
   return(logLikelihood + logPrior)
 }
 
+# function for calculating the log probit for the Poisson mode. 
+LogPostProbit <- function(betas,y,X,mu,Sigma){
+  linPred <- X%*%betas;
+  SmallVal <- .Machine$double.xmin
+  logLikelihood <- sum(y*log(pnorm(linPred)+SmallVal) + (1-y)*log(1-pnorm(linPred)+SmallVal) )
+  logPrior <- dmvnorm(betas, mu, Sigma, log=TRUE);
+  return(logLikelihood + logPrior)
+}
 
 # Select the initial values for beta
 initVal <- matrix(0,nr_parameters,1) #default just 7 zeros, if 7 covariates/variables
