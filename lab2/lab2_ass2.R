@@ -23,7 +23,6 @@
 
 library("mvtnorm")
 
-
 data = read.table("WomenAtWork.dat", header=TRUE)
 n = nrow(data)
 
@@ -55,7 +54,6 @@ LogPostLogistic <- function(betas,y,X,mu,sigma){
 # Select the initial values for beta
 initVal <- matrix(0,nr_parameters,1) #default just 7 zeros, if 7 covariates/variables
 
-
 # first parameter is initVal, which is what we are optimizing, using function LogPostLogistic,
 # which also takes in the parameters y, X, mu0, sigma0. 
 # y is response variable (working or not) 
@@ -73,7 +71,7 @@ betaTilde = OptimRes$par
 betaTilde
 
 # J_y_inv(betaTilde)
-J_betaTilde = -solve(OptimRes$hessian)
+J_betaTilde = -solve(OptimRes$hessian)    #to get e.g. sd of vars, take sqrt(diag), or diag for variances. 
 J_betaTilde
 
 
@@ -88,13 +86,14 @@ lowerBound = interval[1]
 upperBound = interval[2]
 lowerBound
 upperBound
-# alternatively, we can compute the lower and upper bounds like this: 
+# ?alternatively, we can compute the lower and upper bounds like this? Or is this just for univariate normal distribution? 
 # coeff_smallkids = betaTilde[6]
 # lowerBound = coeff_smallkids - 1.96*sd(betaDraws[,6])
 # upperBound = coeff_smallkids + 1.96*sd(betaDraws[,6])
 
 # posterior probability interval for the regression coefficient to the variable NSMallChild
-plot(density(betaDraws[,6]), main="Estimated density and posterior probability interval for the regression coefficient to the variable NSMallChil")
+plot(density(betaDraws[,6]), main="Estimated density and posterior probability interval for the
+     regression coefficient to the variable NSMallChil")
 abline(v=lowerBound, col="red")
 abline(v=upperBound, col="red")
 
@@ -102,7 +101,7 @@ plot(density(betaDraws), main="Estimated density for all regression coefficients
 
 glmModel <- glm(Work ~ 0 + ., data = data, family = binomial)
 glmModel
-# the parameters from optim, i.e. our betaTilde, are very similar to the parameter values from the fitted glm model. 
+# the parameters from optim, i.e. our betaTilde, are very similar to the parameter values from the fitted glm model! 
 
 
 
@@ -121,8 +120,8 @@ x_new = as.matrix(c(1, 20, 12, 8, 43, 0, 2))
 # using our simulated beta draws from the posterior
 log_reg = exp(t(x_new)%*%t(betaDraws)) / (1 + exp(t(x_new)%*%t(betaDraws)))
 # plot the estimated density of the results. 
-plot(density(log_reg), main="Posterior predictive distribution of Pr(y = 1|x). Mean at 0.536")
-abline(v=mean(log_reg), col="red")
+plot(density(log_reg), main="Posterior predictive distribution of Pr(y = 1|x). Median at 0.536")
+abline(v=median(log_reg), col="red")
 
 # calculate number of cases where Pr(y=1|x) > 0.5
 workingProb = length(log_reg[log_reg>0.5]) / nDraws 
@@ -141,6 +140,7 @@ workingProb
 
 # 10000 times, take 11 draws using log_reg as probability
 # i.e. for each of the 10000 times we use a different probability from log_reg, and make 11 draws. 
+set.seed(12345)
 nrWorking = rbinom(nDraws, 11, log_reg)
-hist(nrWorking)
+hist(nrWorking, breaks=11)
 

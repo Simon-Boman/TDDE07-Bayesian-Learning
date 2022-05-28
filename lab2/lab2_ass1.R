@@ -17,15 +17,13 @@ library(mvtnorm)
 data = read.table("TempLambohov.txt", header=TRUE)
 n = nrow(data)
 
-
 # parameters for the Multivariate Normal Distribution (N_3)
-mu0 = c(-10,100,-100) # the means for the 3 values we get from the multivariate normal distribution.
-omega0 = 0.05*diag(3) # omega0 * drawn sigma (sigma^2) kind of gives us variance (and covariance) for the multivariate normal distr? 
+mu0 = c(-8,100,-100) # the means for the 3 values we get from the multivariate normal distribution.
+omega0 = 0.05*diag(3) # omega0 * drawn sigma (sigma^2) kind of gives us variance (and covariance) for the multivariate normal distr. here 0s offdiag. 
 
 # parameters for sigma distribution
 v0 = 10 # parameter selected based on prior beliefs, related to degrees of freedom.
-sigma0 = 0.1 # variance for the distribution of sigma.  
-
+sigma0_sqr = 0.1 # variance for the distribution of sigma.  
 
 
 # simulate draws from joint prior of all parameters, and for every draw compute the regression curve. 
@@ -34,7 +32,7 @@ nDraws = 1000
 set.seed(12345)
 # drawing 1000 sigma^2 from the inv-chi^2 distribution (prior)
 sigma2Draws = c(1:nDraws)
-sigma2Draws = ((v0)*sigma0)/rchisq(nDraws,v0) #in last lab, we used n (instead of v0), cause vn = v0 + n, and if v0 = 0 we get n in the posterior. 
+sigma2Draws = ((v0)*sigma0_sqr)/rchisq(nDraws,v0) #in last lab, we used n (instead of v0), cause vn = v0 + n, and if v0 = 0 we get n in the posterior. 
 
 # drawing Betas from the mutivariate normal distribution (prior), using above sigma^2 draws
 betaDraws = matrix(ncol=3, nrow=nDraws)
@@ -44,7 +42,8 @@ for (i in 1:nDraws) {
 
 # for each draw of Betas, compute and plot the regression curve
 plot(NULL, xlim=c(0,1), ylim=c(-20,30), ylab="temp", xlab="time", main="Plot of regression curve for each draw of Betas")
-legend(x = 0.6, y = 31, legend = c("Regression curve for each draw of Betas", "Mean of the Beta draws", "True temperature"), col = c("black","red", "green"), cex = 0.6, lwd = 3)
+legend(x = 0.6, y = 31, legend = c("Regression curve for each draw of Betas", "Mean of the Beta draws", "True temperature"), 
+       col = c("black","red", "green"), cex = 0.6, lwd = 3)
 
 for (i in 1:nDraws) {
   time = data$time
@@ -56,7 +55,7 @@ for (i in 1:nDraws) {
   
   # for visualizing how well the regression lines seem to fit, plot mean curve 
   if (i == nDraws) {
-    lines(time, (mean(betaDraws[,1]) + mean(betaDraws[,2])*time + mean(betaDraws[,3])*time^2 + rnorm(1)), col="red" )
+    lines(time, (median(betaDraws[,1]) + median(betaDraws[,2])*time + median(betaDraws[,3])*time^2), col="red" )
   }
 }
 
@@ -93,33 +92,39 @@ omega_n = t(X) %*% X + omega0
 
 beta_hat = solve(t(X)%*%X) %*% t(X)%*%y
 mju_n = solve(t(X)%*%X + omega0) %*% (t(X)%*%X%*%beta_hat + omega0%*%mu0)
-sigma_n = ( v0*sigma0 + ( t(y %*% y) + mu0%*%omega0%*%mu0 - t(mju_n)%*%omega_n%*%mju_n ) ) / v_n
+sigma_n_sqr = ( v0*sigma0_sqr + ( t(y %*% y) + mu0%*%omega0%*%mu0 - t(mju_n)%*%omega_n%*%mju_n ) ) / v_n
 
 
 # simulating draws from the posterior
 nDraws = 1000
 set.seed(12345)
-# drawing sigma_n^2 from the posterior inv-chi^2 distribution
+# drawing sigma^2 from the posterior inv-chi^2 distribution
 postSigmaDraws = c(1:nDraws)
-postSigmaDraws = ((v_n)*sigma_n)/rchisq(nDraws,v_n) 
+postSigmaDraws = ((v_n)*sigma_n_sqr)/rchisq(nDraws,v_n) 
 
-# drawing Betas from the posterior multivariate normal distribution, using above sigma_n^2
+# drawing Betas from the posterior multivariate normal distribution, using above sigma^2
 postBetaDraws = matrix(ncol=3, nrow=nDraws)
 for (i in 1:nDraws) {
   postBetaDraws[i, ] = rmvnorm(n=1, mean=mju_n, sigma=postSigmaDraws[i]*solve(omega_n))
 }
 
+
 # i. plot histograms of each marginal posterior of the parameters 
-hist(postBetaDraws[,1])
-hist(postBetaDraws[,2])
-hist(postBetaDraws[,3])
-hist(postSigmaDraws)
+par(mfrow = c(2,2))
+hist(postBetaDraws[,1], breaks=25)
+hist(postBetaDraws[,2], breaks=25)
+hist(postBetaDraws[,3], breaks=25)
+hist(postSigmaDraws, breaks=25)
+
 
 # ii. scatter plot of the input data, and a curve for the median posterior regression curve using our posterior draws
-plot(data$time, data$temp, cex = 0.8, ylab="temp", xlab="time", main="Regression curve for each posterior draw of Betas, median posterior curve, and posterior probability interval")
+par(mfrow = c(1,1))
+plot(data$time, data$temp, cex = 0.8, ylab="temp", xlab="time", main="Regression curve for each posterior draw of Betas, 
+     median posterior curve, and posterior probability interval")
 temps = median(postBetaDraws[,1]) +  median(postBetaDraws[,2]) * data$time + median(postBetaDraws[,3]) * data$time^2
 points(data$time, temps, type="l", col = "red")
-legend(x = 0.3, y = -9, legend = c("Regression curve for each posterior draw of Betas", "Posterior median of the regression curve for Beta draws", "Posterior probability interval"), col = c("black","red", "green"), cex = 0.6, lwd = 3)
+legend(x = 0.3, y = -7, legend = c("Regression curve for each posterior draw of Betas", "Posterior median of the regression curve for 
+                                   Beta draws", "Posterior probability interval"), col = c("black","red", "green"), cex = 0.6, lwd = 3)
 
 # post_temps is a 1000 (rows) x 365 (columns) matrix. The columns correspond to the 365 different times,
 # and each row corresponds to the temperature values for the times, for the different posterior beta draws. 
@@ -133,6 +138,8 @@ for (i in 1:nDraws) {
   post_temps[i, ] = regressionCurve
   #for visualizing if the confidence interval seems to be correct
   lines(time, regressionCurve, col=rgb(0,0,0,0.2))
+  #overlay again with the median
+  lines(data$time, temps, type="l", col = "red")
 }
 
 # for the confidence interval, calculate the lower and upper bound for each of the 365 times
@@ -151,12 +158,9 @@ for (i in 1:nrow(data)) {
 # corresponds to the lower and upper bound for a time. So, row 1 corresponds to all lower bounds, and row 2 to all upper bounds. 
 # interval = apply(X=post_temps, MARGIN=2, FUN=function(x) quantile(x, probs=c(0.025,0.975)))
 
-# plot the equal tailposterior probability intervals
+# plot the equal tail posterior probability intervals
 lines(data$time, interval[1,], type="l", col = "green")
 lines(data$time, interval[2,], type="l", col = "green")
-# plot the original data for visualization
-lines(data$time, temps, type="l", col = "red")
-
 
 
 
@@ -210,7 +214,7 @@ points(times_highest_temp, highest_temps, col = "blue")
 
 # We can use spline regression to solve this problem, and to avoid overfitting we can use a 
 # smoothness/shrinkage/regularization prior. It can be selected using the same prior as previously, 
-# but setting mu0 = 0, and sigma0 = lambda*I, where lambda determines the amount of shrinkage.
+# but setting mu0 = 0, and sigma0_sqr = lambda*I, where lambda determines the amount of shrinkage.
 # a larger lambda means more shrinkage/regularization. 
 # mu = 0 results in small values of the betas, and a large lambda results in small variance (since in the prior
 # we have sigma^2/lambda), which results in in many values being around 0.
@@ -219,6 +223,6 @@ points(times_highest_temp, highest_temps, col = "blue")
 #beta0 (intercept), beta1, ... , beta8
 mu0 = c(rep(0,9))
 lambda = 10
-sigma0 = lambda*diag(9)
+sigma0_sqr = lambda*diag(9)
 #prior: B_j|sigma^2 ~ N(0, sigma^2/lambda)
 
