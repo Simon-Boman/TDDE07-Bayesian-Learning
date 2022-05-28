@@ -8,7 +8,9 @@ tao2 = sum((log(data)-mju)^2)/n
 NDraws = 10000
 PostDraws = c(1:NDraws)
 set.seed(123465)
+
 #drawing 10000 sigma^2 from the inv-chi^2 distribution
+#draw X from chi(n-1) -> take (n-1)*s^2 / X to get inv-chi
 PostDraws = ((n)*tao2)/rchisq(NDraws,n)  
 
 plot(density(PostDraws), xlim=c(0,2), main = expression(paste('Posterior distribution of ',sigma^2,)))
@@ -28,13 +30,14 @@ plot(density(G), main = "Posterior distribution of the Gini coefficient G for th
 
 ###############################2c#####################################
 #estimation of the the 95% equal tail credible interval 
-
+#sort G, then take the 2.5% and 97.5% quantiles using the quantile() function. 
 G_sorted = sort(G)
 interval = quantile(G_sorted, probs=c(0.025, 0.975))
 lowerBound = interval[1]
 upperBound = interval[2]
 
-plot(density(G), main = "Posterior distribution of the Gini coefficient G for the current data set, \n with 95% equal tail credible interval. ")
+plot(density(G), main = "Posterior distribution of the Gini coefficient G for the current data set,
+     \n with 95% equal tail credible interval. ")
 abline(v=lowerBound, col="red")
 abline(v=upperBound, col="red")
 
@@ -54,7 +57,7 @@ xy_sorted = xy[order(xy[,2],decreasing=TRUE),]
 #when deciding which (x,y)-pairs to look at
 stop_value = sum(xy_sorted[,2])*0.95
 
-#accumulated sum of the sorted y-values
+#accumulated sum of the sorted y-values.
 #find out at which index we reach 95% mass (i.e. the stop_value),
 #then index 1 to stop_index corresponds to 95% mass
 acumulatedMass <- function(stop_val) {
@@ -85,7 +88,8 @@ HPDIupper = xy_sorted_95[upper_index,1]
 HPDIlower
 HPDIupper
 
-plot(density(G), main = "Posterior distribution of the Gini coefficient G for the current data set, \n with 95% Equal Tail Credible Interval, \n and 95% Highest Posterior Density Interval HPDI ")
+plot(density(G), main = "Posterior distribution of the Gini coefficient G for the current data set,
+     \n with 95% Equal Tail Credible Interval, \n and 95% Highest Posterior Density Interval HPDI ")
 legend(x = 0.6, y = 5, legend = c("Equal Tail Credible Interval", "HPDI"), col = c("red","blue"), lwd = 3)
 abline(v=lowerBound, col="red")
 abline(v=upperBound, col="red")

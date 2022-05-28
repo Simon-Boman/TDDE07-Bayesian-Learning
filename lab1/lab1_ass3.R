@@ -1,5 +1,5 @@
 ###############################3a#####################################
-degrees = c(285, 296, 314, 20, 299, 296, 40, 303, 326, 308)
+#degrees = c(285, 296, 314, 20, 299, 296, 40, 303, 326, 308)
 radians = c(1.83, 2.02, 2.33, -2.79, 2.07, 2.02, -2.44, 2.14, 2.54, 2.23)
 
 mju = 2.51
@@ -34,11 +34,9 @@ plot(k, post, type="l", main="Posterior distribution of k", col="blue")
 
 ###############################3b#####################################
 #the approximate posterior mode of k is the largest value in the posterior
+#mode is the value that has highest number of occurrences in the data. 
 approx_post_K = k[which.max(post)]
 approx_post_K
 plot(k, post, type="l", main="Posterior distribution of k", col="blue")
 abline(v=approx_post_K, col="red")
-
-
-
 

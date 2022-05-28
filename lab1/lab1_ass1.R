@@ -1,12 +1,13 @@
 ###############################1a#####################################
-options(scipen=999) #for removing scientific notation on the plots
+options(scipen=999) # for removing scientific notation on the plots
 
+# number of observations and number of successes
 n = 50
 s = 13
-#alpha and beta in prior Beta distribution
+# alpha and beta in prior Beta distribution
 alpha0 = 5
 beta0 = 5
-#alpha and beta in posterior Beta distribution
+# alpha and beta in posterior Beta distribution
 alpha = alpha0 + s
 beta = beta0 + (n - s)
 
@@ -33,8 +34,8 @@ for (i in 1:length(draws)) {
 #As we see in the plot, the difference between the true mean/sd and the estimated mean/sd from the simulations
 #go to 0 as we increase the number of draws, i.e. the posterior mean and sd converges to the true values of 0.3 and 0.05867387. 
 max_y = max(means, sds) 
-plot(draws, means, type="l", lwd = 2, col="blue", ylim=c(0,max_y), main = "Deviance from true mean and sd for different number of draws",
-     xlab="Number of draws", ylab="Deviance between true mean/sd and simulated mean/sd" )
+plot(draws, means, type="l", lwd = 2, col="blue", ylim=c(0,max_y), main = "Deviance from true mean and sd for different number
+     of draws", xlab="Number of draws", ylab="Deviance between true mean/sd and simulated mean/sd" )
 points(draws, sds, type="l", lwd = 2, col="green")
 legend(x = max(draws)*0.8, y = max_y*0.95, legend = c("mean", "sd"), col = c("blue","green"), lwd = 3)
 
