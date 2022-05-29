@@ -20,7 +20,6 @@ library("MASS")
 data = read.table("eBayNumberOfBidderData.dat", header=TRUE)
 n = nrow(data)
 
-
 # fitting a generalized linear model using our data, nBids depends on all parameter except Const (the intercept). 
 # family = poisson to specify Poisson regression model
 set.seed(12345)
@@ -39,11 +38,13 @@ glmModel
 # (but with the log posterior function replaced by the corresponding one for the Poisson model, which you have to code up.).
 
 
+
+#Lambda = exp(xB) in the Po-distr
 y = data[,1]
 X = as.matrix(data[,2:ncol(data)])
 
 mu0 = as.matrix(c(rep(0,9)))
-sigma0 = 100*solve(t(X)%*%X)
+sigma0_sqr = 100*solve(t(X)%*%X)
 
 # function for calculating the log posterior for the Poisson mode. 
 LogPostPoisson <- function(betas,y,X,mu,sigma){
@@ -62,7 +63,7 @@ initVal <- matrix(0,9,1)
 
 # numeric optimization for Beta using above function
 set.seed(12345)
-OptimRes <- optim(initVal,LogPostPoisson,gr=NULL,y,X,mu0,sigma0,method=c("BFGS"),control=list(fnscale=-1),hessian=TRUE)
+OptimRes <- optim(initVal,LogPostPoisson,gr=NULL,y,X,mu0,sigma0_sqr,method=c("BFGS"),control=list(fnscale=-1),hessian=TRUE)
 
 # posterior mode, essentially what is optimized by the optimization. 
 # posterior mode is same as posterior mean and posterior variance for multivariate normal distribution
@@ -116,31 +117,29 @@ RWMSampler = function(c, sigma, prevBeta, logPostFunc, ...) {
   return (prevBeta)
 }
 
-
 # initial beta0 (i.e. theta0 in the general case general)
 initVal <- matrix(0,9,1) 
 c = 3
 # sigma was generated in b) 
 
-#test = RWMSampler(c, sigma, initVal, LogPostPoisson, y, X, mu0, sigma0)
-
 nDraws = 10000
 posteriorDraws = matrix(nrow=9, ncol=nDraws)
 # For the first draw, use initVal
 set.seed(12345)
-posteriorDraws[,1] = RWMSampler(c, sigma, initVal, LogPostPoisson, y, X, mu0, sigma0)
+posteriorDraws[,1] = RWMSampler(c, sigma, initVal, LogPostPoisson, y, X, mu0, sigma0_sqr)
 # for draw 2 - nDraws
 set.seed(12345)
 for (i in 2:(nDraws)) {
-  posteriorDraws[,i] = RWMSampler(c, sigma, (posteriorDraws[,i-1]), LogPostPoisson, y, X, mu0, sigma0)
+  posteriorDraws[,i] = RWMSampler(c, sigma, (posteriorDraws[,i-1]), LogPostPoisson, y, X, mu0, sigma0_sqr)
 }
 
 # compare with approximation from b) and plot deviance
-glmEstimation = glmModel$coefficients
+approximation_b = betaTilde
 par(mfrow=c(3,3))
 for (betaIndex in 1:9) {
   plot(c(1:nDraws), abs(posteriorDraws[betaIndex,]-glmEstimation[betaIndex]), type="l", col="red", 
-  xlab = "draw", ylab="deviance true and approximated", main = paste("Absolute deviance between actual and approximated Beta", betaIndex))
+  xlab = "draw", ylab="deviance true and approximated", 
+  main = paste("Absolute deviance between actual and approximated Beta", betaIndex))
 }
 
 

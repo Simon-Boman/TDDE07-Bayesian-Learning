@@ -48,7 +48,6 @@ plot(xSimulations[17,], type="l", ylab = "x", main = "Traceplot, phi = 0.6")
 plot(xSimulations[20,], type="l", ylab = "x", main = "Traceplot, phi = 0.9")
 plot(xSimulations[21,], type="l", ylab = "x", main = "Traceplot, phi = 1")
 
-
 # alternative for more efficient plotting
 par(mfrow=c(3,3))
 plot(xSimulations[1,], type="l", ylab = "x", main = "Traceplot, phi = -1")
