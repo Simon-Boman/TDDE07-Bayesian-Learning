@@ -25,16 +25,13 @@ tao0_sq = 180 #variance of expected rainfaill
 v0 = 140 #expected value of variance
 sigma0_sq = 17 #expected 
 
-
-
-
 nDraws <- 10000
 gibbsDraws <- matrix(0,nDraws,2)
 colnames(gibbsDraws) = c("mu", "sigma")
 
 vn = v0 + n 
 
-sigma_sq <- 1 # Initial value for sigma
+sigma_sq <- 1 # Initial value for sigma for the first sampling 
 set.seed(12345)
 for (i in 1:nDraws){  
   
@@ -49,9 +46,9 @@ for (i in 1:nDraws){
   gibbsDraws[i,1] <- mu
   
   # Update sigma given mu
-  # param2_sq = variance? 
-  param2_sq = (v0*sigma0_sq + sum(data-mu)^2) / (n + v0)
-  sigma_sq = (vn*param2_sq/rchisq(1, vn))
+  # tao_param2_sq = variance? 
+  tao_param2_sq = (v0*sigma0_sq + sum(data-mu)^2) / (n + v0)
+  sigma_sq = (vn*tao_param2_sq/rchisq(1, vn))
   gibbsDraws[i,2] <- sigma_sq
   
 #vi har X^2 (vn, param2)
@@ -60,8 +57,7 @@ for (i in 1:nDraws){
   #    ((v0)*sigma0_sq)/rchisq(nDraws,v0) 
 }
 
-gibbsDraws
-
+# acf - autocorrelation
 a_Gibbs_mu <- acf(gibbsDraws[,1])
 IF_Gibbs_mu <- 1+2*sum(a_Gibbs_mu$acf[-1])
 IF_Gibbs_mu
@@ -71,19 +67,22 @@ IF_Gibbs_sigma <- 1+2*sum(a_Gibbs_sigma$acf[-1])
 IF_Gibbs_sigma
 
 
-
-plot(1:nDraws, gibbsDraws[,1], type = "l",col="red") # traceplot of Gibbs draws
+plot(1:nDraws, gibbsDraws[,1], type = "l",col="red", main = "Markov chain trajectory, mu") # traceplot of Gibbs draws
 hist(gibbsDraws[,1],col="red") # histogram of Gibbs draws
-cusumData =  cumsum(gibbsDraws[,1])/seq(1,nDraws) # Cumulative mean value of mu, Gibbs draws
+#cusumData =  cumsum(gibbsDraws[,1])/seq(1,nDraws) # Cumulative mean value of mu, Gibbs draws
 #plot(1:nDraws, cusumData, type = "l", col="red")
 #barplot(height = a_Gibbs_mu$acf[-1],col="red") # acf for Gibbs draws
 
-
-plot(1:nDraws, gibbsDraws[,2], type = "l",col="red") # traceplot of Gibbs draws
+plot(1:nDraws, gibbsDraws[,2], type = "l",col="red", main = "Markov chain trajectory, sigma") # traceplot of Gibbs draws
 hist(gibbsDraws[,2],col="red") # histogram of Gibbs draws
-cusumData =  cumsum(gibbsDraws[,2])/seq(1,nDraws) # Cumulative mean value of mu, Gibbs draws
+#cusumData =  cumsum(gibbsDraws[,2])/seq(1,nDraws) # Cumulative mean value of mu, Gibbs draws
 #plot(1:nDraws, cusumData, type = "l", col="red")
 #barplot(height = a_Gibbs_sigma$acf[-1],col="red") # acf for Gibbs draws
+
+# Plotting the cumulative path of estimates of Pr(theta1>0, theta2>0)
+# par(mfrow=c(2,1))
+# plot(cumsum(directDraws[,1]>0 & directDraws[,2]>0)/seq(1,nDraws),type="l", main='Direct draws', xlab='Iteration number', ylab='', ylim = c(0,1))
+# plot(cumsum(gibbsDraws[,1]>0 & gibbsDraws[,2]>0)/seq(1,nDraws),type="l", main='Gibbs draws', xlab='Iteration number', ylab='', ylim = c(0,1))
 
 
 
@@ -103,5 +102,3 @@ hist(posteriorDraws, main = "posterior draws")
 plot(density(posteriorDraws), col = "red", xlim=c(0,50), main = "green is original data, red is draws from posterior")
 lines(density(data_original), col = "green")
 #lines(density(data), col = "blue")
-
-

@@ -1,5 +1,6 @@
 library("mvtnorm")
 library(mvtnorm)
+# library(MASS) # To access the mvrnorm() function
 
 ###################### 1 A ###########################
 # Gibbs sampler for a normal model

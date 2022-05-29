@@ -105,6 +105,7 @@ RWMSampler = function(c, sigma, prevBeta, logPostFunc, ...) {
   proposalBeta = t(proposalBeta)
 
   # compute acceptance probability, using the user selected function 
+  # alpha = min (1, p(theta-p|y)/(p(theta-prev|y))) , = 1, p(y|theta-p)*p(theta-p) / p(y|theta-prev)*p(theta-prev)
   alpha = min(1, exp(logPostFunc(proposalBeta, ...) - logPostFunc(prevBeta, ...)) )
   
   # with probability alpha, set theta(i) = sample proposal, otherwise set theta(i) = theta(i-1) (i.e. prev beta)
