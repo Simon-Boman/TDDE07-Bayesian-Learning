@@ -137,10 +137,19 @@ for (i in 2:(nDraws)) {
 approximation_b = betaTilde
 par(mfrow=c(3,3))
 for (betaIndex in 1:9) {
-  plot(c(1:nDraws), abs(posteriorDraws[betaIndex,]-glmEstimation[betaIndex]), type="l", col="red", 
+  plot(c(1:nDraws), abs(posteriorDraws[betaIndex,]-approximation_b[betaIndex]), type="l", col="red", 
   xlab = "draw", ylab="deviance true and approximated", 
   main = paste("Absolute deviance between actual and approximated Beta", betaIndex))
 }
+
+# plot convergence for beta
+# not using burn in - default is to remove first half of the MCMC draws (since sampling depends on starting value)
+for (betaIndex in 1:9) {
+  plot(c(1:nDraws), posteriorDraws[betaIndex,1:nDraws], type="l", col="red", 
+       xlab = "draw", ylab="Beta value", 
+       main = paste("Beta convergence", betaIndex))
+}
+
 
 
 
@@ -163,7 +172,7 @@ nrBids = rpois(nDraws, lambda=exp(x%*%posteriorDraws))
 #}
 
 par(mfrow=c(1,1))
-hist(nrBids)
+barplot(table(nrBids))
 
 #count the probability the the nr of bids is 0
 probNoBids = sum(nrBids==0)/nDraws
